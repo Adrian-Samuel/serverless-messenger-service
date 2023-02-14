@@ -1,9 +1,13 @@
 # Messenger Service
 
-This is a serverless repo to send texts using http endpoint
+This is a serverless repo to send texts using http endpoint using event driven architecture
 
 Endpoint in question -  /sms/send
 Service used to send sms - AWS sns
+
+Example flow 
+
+![architecture-flow](./event_flow.png)
 
 
 ## TODOs
