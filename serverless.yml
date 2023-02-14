@@ -1,0 +1,76 @@
+service: sms-messenger
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: prod
+  httpApi:
+    cors: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource: !Ref smsLambda
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource: !Ref broadCastSNS
+        - Effect: Allow
+          Action:
+            - sns:publish
+            - sqs:ReceiveMessage
+          Resource: !Ref sqsHandler
+resources:
+  Resources:
+    broadCastSNS:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: broadcast-sns
+        TopicName: broadcast-sns
+    smsSqs:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: smsQueue
+    smsSnsSqsSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        TopicArn: !Ref broadCastSNS
+        Protocol: sqs
+        Endpoint: !Ref smsSqs
+    smsSns:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: sms-sns
+functions:
+  smsLambda:
+    handler: src/handlers/smsHandler.smsSend
+    events:
+      - httpApi:
+          method: POST
+          path: /sms/send
+    destinations:
+      onSuccess: 
+        type: sns
+        arn: !Ref broadCastSNS
+    environment:
+      SNS_BRODCAST_ARN: !Ref broadCastSNS
+  sqsHandler:
+    handler: src/handlers/sqsHandler.process
+    events:
+      - sqs:
+          arn: !Ref broadCastSNS
+          batchSize: 1
+    environment:
+      SNS_SMS_ARN: !Ref smsSns
+plugins:
+  - serverless-webpack
+
+custom:
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    includeModules: false
+    packager: 'yarn'
