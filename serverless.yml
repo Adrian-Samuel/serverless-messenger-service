@@ -48,7 +48,8 @@ functions:
       - httpApi:
           method: POST
           path: /sms/send
-    destinations:
+    lambda:
+      destinations:
       onSuccess: 
         type: sns
         arn: !Ref broadCastSNS
@@ -58,7 +59,7 @@ functions:
     handler: src/handlers/sqsHandler.process
     events:
       - sqs:
-          arn: !Ref broadCastSNS
+          arn: !Ref smsSqs
           batchSize: 1
 plugins:
   - serverless-webpack
