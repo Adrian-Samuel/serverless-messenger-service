@@ -35,16 +35,12 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: smsQueue
-    smsSnsSqsSubscription:
+    SqshandlerSubscription:
       Type: AWS::SNS::Subscription
       Properties:
         TopicArn: !Ref broadCastSNS
         Protocol: sqs
-        Endpoint: !Ref smsSqs
-    smsSns:
-      Type: AWS::SNS::Topic
-      Properties:
-        TopicName: sms-sns
+        Endpoint: !Ref smsLambda
 functions:
   smsLambda:
     handler: src/handlers/smsHandler.smsSend
@@ -64,8 +60,6 @@ functions:
       - sqs:
           arn: !Ref broadCastSNS
           batchSize: 1
-    environment:
-      SNS_SMS_ARN: !Ref smsSns
 plugins:
   - serverless-webpack
 

@@ -3,6 +3,7 @@ const slsw = require("serverless-webpack");
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const nodeExternals = require("webpack-node-externals");
 const webpack = require('webpack')
+require('dotenv').config()
 
 module.exports = {
   mode: slsw.lib.webpack.isLocal ? "development" : "production",
@@ -37,11 +38,13 @@ module.exports = {
         },
       },
     ],
+  
     plugins:[
       new webpack.DefinePlugin({
-        AWS_ACCOUNT_ID: `${accountId}`
-      })
+        AWS_ACCOUNT_ID: `${process.env.AWS_ACCOUNT_ID}`
+      }),
+      new ForkTsCheckerWebpackPlugin()
     ]
   },
-  plugins: [new ForkTsCheckerWebpackPlugin()],
+  
 };
