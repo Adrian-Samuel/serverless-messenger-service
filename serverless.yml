@@ -14,16 +14,16 @@ provider:
         - Effect: Allow
           Action:
             - sns:Publish
-          Resource: !Ref smsLambda
+          Resource: !GetAtt smsLambda.Arn
         - Effect: Allow
           Action:
             - sqs:SendMessage
-          Resource: !Ref broadCastSNS
+          Resource: !GetAtt broadCastSNS.Arn
         - Effect: Allow
           Action:
             - sns:publish
             - sqs:ReceiveMessage
-          Resource: !Ref sqsHandler
+          Resource: !GetAtt sqsHandler.arn
 resources:
   Resources:
     broadCastSNS:
@@ -35,12 +35,12 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: smsQueue
-    SqshandlerSubscription:
+    SNSBroadCastSubscription:
       Type: AWS::SNS::Subscription
       Properties:
         TopicArn: !Ref broadCastSNS
         Protocol: sqs
-        Endpoint: !Ref smsLambda
+        Endpoint: !Ref smsSqs
 functions:
   smsLambda:
     handler: src/handlers/smsHandler.smsSend
@@ -49,8 +49,8 @@ functions:
           method: POST
           path: /sms/send
     lambda:
-      destinations:
-      onSuccess: 
+        destinations:
+        onSuccess: 
         type: sns
         arn: !Ref broadCastSNS
     environment:
@@ -59,7 +59,7 @@ functions:
     handler: src/handlers/sqsHandler.process
     events:
       - sqs:
-          arn: !Ref smsSqs
+          arn: !GetAtt smsSqs.Arn
           batchSize: 1
 plugins:
   - serverless-webpack
